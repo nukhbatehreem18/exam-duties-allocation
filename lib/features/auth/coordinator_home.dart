@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_controller.dart';
+import 'package:go_router/go_router.dart';
 
 class CoordinatorHome extends ConsumerWidget {
   const CoordinatorHome({super.key});
@@ -18,7 +19,20 @@ class CoordinatorHome extends ConsumerWidget {
           ),
         ],
       ),
-      body: Center(child: Text('Welcome, ${user?.name ?? ''}')),
+            body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Welcome, ${user?.name ?? ''}'),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => context.go('/coordinator/staff'),
+              icon: const Icon(Icons.people),
+              label: const Text('Manage Staff'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
