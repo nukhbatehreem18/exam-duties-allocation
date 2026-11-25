@@ -1,10 +1,11 @@
-/// App mein sirf do tarah ke log hain.
+/// The two roles in the app.
 enum UserRole {
-  coordinator, // allocation karta hai, sab kuch dekh sakta hai
-  staff,       // sirf apni duties dekhta hai
+  coordinator, // runs allocation and can see everything
+  staff, // can only see their own duties
 }
 
-/// Text se role banata hai (database se parhte waqt kaam aata hai).
+/// Converts text (for example from a database) to a role.
+/// Unknown text falls back to the safest role: staff.
 UserRole roleFromString(String value) {
   return UserRole.values.firstWhere(
     (r) => r.name == value,

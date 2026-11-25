@@ -5,8 +5,8 @@ class Staff {
   final String id;
   final String name;
   final String email;
-  final int maxDuties;          // zyada se zyada kitni duties
-  final int maxMinutes;         // zyada se zyada kul minutes (integer)
+  final int maxDuties; // maximum number of duties
+  final int maxMinutes; // maximum total duty minutes (integer)
   final List<AvailabilitySlot> availability;
 
   const Staff({
@@ -18,7 +18,7 @@ class Staff {
     this.availability = const [],
   });
 
-  /// Kya staff is exam ke poore waqt mein available hai?
+  /// True if the staff member is available for the whole exam time.
   bool isAvailableFor(TimeInterval exam) {
     return availability.any((slot) => slot.covers(exam));
   }

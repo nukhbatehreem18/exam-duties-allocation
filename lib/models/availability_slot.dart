@@ -1,7 +1,7 @@
 import '../core/time_utils.dart';
 
-/// Staff ka ek waqt jab wo duty ke liye available hai.
-/// Interval half-open [start, end) hai.
+/// A period during which a staff member is available for duty.
+/// The interval is half-open: [start, end).
 class AvailabilitySlot {
   final DateTime start;
   final DateTime end;
@@ -10,7 +10,7 @@ class AvailabilitySlot {
 
   TimeInterval get interval => TimeInterval(start, end);
 
-  /// Kya ye slot poora exam ka waqt cover karta hai?
+  /// True if this slot fully covers the exam time.
   bool covers(TimeInterval exam) {
     return !start.isAfter(exam.start) && !end.isBefore(exam.end);
   }

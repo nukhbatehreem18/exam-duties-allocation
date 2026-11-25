@@ -18,7 +18,7 @@ void main() {
     ],
   );
 
-  test('exam slot ke andar ho to available', () {
+  test('available when the exam is inside an availability slot', () {
     final exam = TimeInterval(
       DateTime.utc(2026, 12, 1, 9, 0),
       DateTime.utc(2026, 12, 1, 11, 0),
@@ -26,7 +26,7 @@ void main() {
     expect(staff.isAvailableFor(exam), true);
   });
 
-  test('exam slot se bahar nikle to available nahi', () {
+  test('not available when the exam is outside every slot', () {
     final exam = TimeInterval(
       DateTime.utc(2026, 12, 1, 12, 0),
       DateTime.utc(2026, 12, 1, 14, 0),

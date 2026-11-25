@@ -1,29 +1,29 @@
-/// Pakistan (Asia/Karachi) ka time zone hamesha +05:00 hai.
+/// Pakistan (Asia/Karachi) is always UTC+05:00 (no daylight saving).
 const Duration karachiOffset = Duration(hours: 5);
 
-/// Do time intervals half-open [start, end) hote hain.
-/// Matlab: start shamil hai, end shamil NAHI hai.
+/// A time interval, treated as half-open: [start, end).
+/// The start is included, the end is NOT included.
 class TimeInterval {
   final DateTime start;
   final DateTime end;
 
   TimeInterval(this.start, this.end)
-      : assert(end.isAfter(start), 'end, start ke baad hona chahiye');
+      : assert(end.isAfter(start), 'end must be after start');
 
-  /// Interval ki lambai integer minutes mein.
+  /// Length of the interval in integer minutes.
   int get durationMinutes => end.difference(start).inMinutes;
 
-  /// Kya ye interval doosre se overlap karta hai?
-  /// Half-open rule: agar ek ka end == doosre ka start, to overlap NAHI.
+  /// Half-open rule: if one interval ends exactly when the other
+  /// starts, they do NOT overlap.
   bool overlaps(TimeInterval other) {
     return start.isBefore(other.end) && other.start.isBefore(end);
   }
 }
 
-/// Kisi bhi DateTime ko Karachi ke time mein badalta hai.
+/// Converts any DateTime to Karachi time (UTC+05:00).
 DateTime toKarachi(DateTime t) => t.toUtc().add(karachiOffset);
 
-/// Minutes ko "2h 30m" jaisa text banata hai (sirf dikhane ke liye).
+/// Formats minutes as text such as "2h 30m" (for display only).
 String formatMinutes(int minutes) {
   final h = minutes ~/ 60;
   final m = minutes % 60;
