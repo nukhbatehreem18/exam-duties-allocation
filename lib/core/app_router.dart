@@ -8,6 +8,7 @@ import '../features/auth/staff_home.dart';
 import '../models/user_role.dart';
 import '../features/staff/staff_list_screen.dart';
 import '../features/staff/staff_form_screen.dart';
+import '../features/staff/availability_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Jab bhi login/logout ho, router ko batao ke dobara check kare.
@@ -58,6 +59,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'staff/:id/edit',
             builder: (_, state) =>
                 StaffFormScreen(staffId: state.pathParameters['id']),
+          ),
+          GoRoute(
+            path: 'staff/:id/availability',
+            builder: (_, state) =>
+                AvailabilityScreen(staffId: state.pathParameters['id']!),
           ),
         ],
       ),

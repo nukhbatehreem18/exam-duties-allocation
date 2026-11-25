@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/staff.dart';
+import '../../models/availability_slot.dart';
 
 class StaffController extends Notifier<List<Staff>> {
   @override
@@ -28,6 +29,43 @@ class StaffController extends Notifier<List<Staff>> {
       ];
 
   void remove(String id) => state = state.where((s) => s.id != id).toList();
+
+  void addSlot(String staffId, AvailabilitySlot slot) {
+    state = [
+      for (final s in state)
+        if (s.id == staffId)
+          Staff(
+            id: s.id,
+            name: s.name,
+            email: s.email,
+            maxDuties: s.maxDuties,
+            maxMinutes: s.maxMinutes,
+            availability: [...s.availability, slot],
+          )
+        else
+          s,
+    ];
+  }
+
+  void removeSlot(String staffId, int index) {
+    state = [
+      for (final s in state)
+        if (s.id == staffId)
+          Staff(
+            id: s.id,
+            name: s.name,
+            email: s.email,
+            maxDuties: s.maxDuties,
+            maxMinutes: s.maxMinutes,
+            availability: [
+              for (var i = 0; i < s.availability.length; i++)
+                if (i != index) s.availability[i],
+            ],
+          )
+        else
+          s,
+    ];
+  }
 }
 
 final staffProvider =

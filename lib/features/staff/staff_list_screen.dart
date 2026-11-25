@@ -32,10 +32,22 @@ class StaffListScreen extends ConsumerWidget {
                   isThreeLine: true,
                   onTap: () =>
                       context.push('/coordinator/staff/${s.id}/edit'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () =>
-                        ref.read(staffProvider.notifier).remove(s.id),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Availability',
+                        icon: const Icon(Icons.event_available),
+                        onPressed: () => context
+                            .push('/coordinator/staff/${s.id}/availability'),
+                      ),
+                      IconButton(
+                        tooltip: 'Delete',
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () =>
+                            ref.read(staffProvider.notifier).remove(s.id),
+                      ),
+                    ],
                   ),
                 );
               },
