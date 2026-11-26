@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../domain/input_rules.dart';
 import '../../models/availability_slot.dart';
 import 'staff_controller.dart';
 
@@ -8,11 +9,18 @@ class AvailabilityScreen extends ConsumerWidget {
   final String staffId;
   const AvailabilityScreen({super.key, required this.staffId});
 
+  void _message(BuildContext context, String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
   Future<void> _addSlot(BuildContext context, WidgetRef ref) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
     final date = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2026),
+      initialDate: today,
+      firstDate: today, // past dates cannot be chosen
       lastDate: DateTime(2030),
     );
     if (date == null || !context.mounted) return;
@@ -24,6 +32,14 @@ class AvailabilityScreen extends ConsumerWidget {
     );
     if (start == null || !context.mounted) return;
 
+    final startDt =
+        DateTime(date.year, date.month, date.day, start.hour, start.minute);
+    final pastError = validateNotInPast(startDt, DateTime.now());
+    if (pastError != null) {
+      _message(context, pastError);
+      return;
+    }
+
     final end = await showTimePicker(
       context: context,
       initialTime: const TimeOfDay(hour: 13, minute: 0),
@@ -31,21 +47,22 @@ class AvailabilityScreen extends ConsumerWidget {
     );
     if (end == null || !context.mounted) return;
 
-    final startDt =
-        DateTime(date.year, date.month, date.day, start.hour, start.minute);
     final endDt =
         DateTime(date.year, date.month, date.day, end.hour, end.minute);
+    final slot = AvailabilitySlot(start: startDt, end: endDt);
 
-    if (!endDt.isAfter(startDt)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('End time must be after start time')),
-      );
+    final staff = ref.read(staffProvider).firstWhere((s) => s.id == staffId);
+    final error = validateSlot(
+      candidate: slot,
+      existing: staff.availability,
+      now: DateTime.now(),
+    );
+    if (error != null) {
+      _message(context, error);
       return;
     }
 
-    ref
-        .read(staffProvider.notifier)
-        .addSlot(staffId, AvailabilitySlot(start: startDt, end: endDt));
+    ref.read(staffProvider.notifier).addSlot(staffId, slot);
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../domain/input_rules.dart';
 import '../../models/staff.dart';
 import 'staff_controller.dart';
 
@@ -46,9 +47,29 @@ class _StaffFormScreenState extends ConsumerState<StaffFormScreen> {
   String? _required(String? v) =>
       (v == null || v.trim().isEmpty) ? 'This field is required' : null;
 
-  String? _positiveInt(String? v) {
+  String? _emailRule(String? v) {
+    final format = validateEmailFormat(v);
+    if (format != null) return format;
+    final taken =
+        isEmailTaken(v!, ref.read(staffProvider), exceptId: _existing?.id);
+    return taken ? 'This email is already used by another staff member' : null;
+  }
+
+  String? _dutiesRule(String? v) {
     final n = int.tryParse(v ?? '');
-    return (n == null || n <= 0) ? 'Enter a whole number above 0' : null;
+    if (n == null || n <= 0) return 'Enter a whole number above 0';
+    if (n > maxAllowedDuties) {
+      return 'Max duties cannot be more than $maxAllowedDuties';
+    }
+    return null;
+  }
+
+  String? _hoursRule(String? v) {
+    final h = int.tryParse(v ?? '');
+    if (h == null || h <= 0) return 'Enter a whole number above 0';
+    final d = int.tryParse(_dutiesCtrl.text);
+    if (d == null || d < 1 || d > maxAllowedDuties) return null;
+    return validateDutyLimits(maxDuties: d, maxMinutes: h * 60);
   }
 
   void _save() {
@@ -90,18 +111,18 @@ class _StaffFormScreenState extends ConsumerState<StaffFormScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                       labelText: 'Email', border: OutlineInputBorder()),
-                  validator: _required,
+                  validator: _emailRule,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _dutiesCtrl,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                      labelText: 'Max duties',
-                      border: OutlineInputBorder()),
-                  validator: _positiveInt,
+                      labelText: 'Max duties', border: OutlineInputBorder()),
+                  validator: _dutiesRule,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -110,7 +131,7 @@ class _StaffFormScreenState extends ConsumerState<StaffFormScreen> {
                   decoration: const InputDecoration(
                       labelText: 'Max duty hours',
                       border: OutlineInputBorder()),
-                  validator: _positiveInt,
+                  validator: _hoursRule,
                 ),
                 const SizedBox(height: 24),
                 FilledButton(onPressed: _save, child: const Text('Save')),

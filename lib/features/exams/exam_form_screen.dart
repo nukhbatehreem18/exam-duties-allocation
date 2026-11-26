@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../domain/input_rules.dart';
 import '../../models/exam_session.dart';
 import 'exam_controller.dart';
 
@@ -56,34 +57,95 @@ class _ExamFormScreenState extends ConsumerState<ExamFormScreen> {
     return (n == null || n <= 0) ? 'Enter a whole number above 0' : null;
   }
 
+  DateTime _combine(DateTime date, TimeOfDay t) =>
+      DateTime(date.year, date.month, date.day, t.hour, t.minute);
+
+  /// Past check for a start time. An unchanged start of an existing exam
+  /// is always accepted, so old exams can still be edited.
+  String? _checkPast(DateTime start) {
+    if (_existing != null && start == _existing!.start) return null;
+    return validateNotInPast(start, DateTime.now());
+  }
+
+  void _showMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
   Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // Past dates cannot be chosen (except the date of an existing old exam).
+    final first = (_date != null && _date!.isBefore(today)) ? _date! : today;
+
     final d = await showDatePicker(
       context: context,
-      initialDate: _date ?? DateTime.now(),
-      firstDate: DateTime(2026),
+      initialDate: _date ?? today,
+      firstDate: first,
       lastDate: DateTime(2030),
     );
-    if (d != null) setState(() => _date = d);
+    if (d == null || !mounted) return;
+
+    var cleared = false;
+    setState(() {
+      _date = d;
+      if (_startTime != null && _checkPast(_combine(d, _startTime!)) != null) {
+        _startTime = null;
+        _endTime = null;
+        cleared = true;
+      }
+    });
+    if (cleared) {
+      _showMessage('Times were cleared because they are in the past. '
+          'Please choose them again.');
+    }
   }
 
   Future<void> _pickTime({required bool isStart}) async {
+    if (_date == null) {
+      _showMessage('Please choose the date first');
+      return;
+    }
+    if (!isStart && _startTime == null) {
+      _showMessage('Please choose the start time first');
+      return;
+    }
+
     final t = await showTimePicker(
       context: context,
       initialTime: (isStart ? _startTime : _endTime) ??
           const TimeOfDay(hour: 9, minute: 0),
     );
-    if (t == null) return;
-    setState(() {
-      if (isStart) {
-        _startTime = t;
-      } else {
-        _endTime = t;
-      }
-    });
-  }
+    if (t == null || !mounted) return;
 
-  void _showMessage(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    final picked = _combine(_date!, t);
+
+    if (isStart) {
+      final pastError = _checkPast(picked);
+      if (pastError != null) {
+        _showMessage(pastError);
+        return;
+      }
+      var cleared = false;
+      setState(() {
+        _startTime = t;
+        if (_endTime != null && !_combine(_date!, _endTime!).isAfter(picked)) {
+          _endTime = null;
+          cleared = true;
+        }
+      });
+      if (cleared) {
+        _showMessage('End time was cleared. Please choose it again.');
+      }
+    } else {
+      final start = _combine(_date!, _startTime!);
+      final error = validateExamTimes(
+          start: start, end: picked, now: DateTime.now(), checkPast: false);
+      if (error != null) {
+        _showMessage(error);
+        return;
+      }
+      setState(() => _endTime = t);
+    }
   }
 
   void _save() {
@@ -93,13 +155,15 @@ class _ExamFormScreenState extends ConsumerState<ExamFormScreen> {
       return;
     }
 
-    final start = DateTime(_date!.year, _date!.month, _date!.day,
-        _startTime!.hour, _startTime!.minute);
-    final end = DateTime(_date!.year, _date!.month, _date!.day,
-        _endTime!.hour, _endTime!.minute);
+    final start = _combine(_date!, _startTime!);
+    final end = _combine(_date!, _endTime!);
 
-    if (!end.isAfter(start)) {
-      _showMessage('End time must be after start time');
+    final timeChanged =
+        _existing == null || start != _existing!.start || end != _existing!.end;
+    final timeError = validateExamTimes(
+        start: start, end: end, now: DateTime.now(), checkPast: timeChanged);
+    if (timeError != null) {
+      _showMessage(timeError);
       return;
     }
 
@@ -111,6 +175,13 @@ class _ExamFormScreenState extends ConsumerState<ExamFormScreen> {
       end: end,
       requiredInvigilators: int.parse(_requiredCtrl.text),
     );
+
+    final clash =
+        validateRoomClash(candidate: exam, existing: ref.read(examProvider));
+    if (clash != null) {
+      _showMessage(clash);
+      return;
+    }
 
     final controller = ref.read(examProvider.notifier);
     _existing == null ? controller.add(exam) : controller.update(exam);
