@@ -10,6 +10,7 @@ import '../features/staff/staff_form_screen.dart';
 import '../features/staff/availability_screen.dart';
 import '../features/exams/exam_list_screen.dart';
 import '../features/exams/exam_form_screen.dart';
+import '../features/allocation/allocation_screen.dart';
 import '../models/user_role.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -78,6 +79,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'exams/:id/edit',
             builder: (_, state) =>
                 ExamFormScreen(examId: state.pathParameters['id']),
+          ),
+          GoRoute(
+            path: 'allocation',
+            builder: (_, __) => const AllocationScreen(),
           ),
         ],
       ),
