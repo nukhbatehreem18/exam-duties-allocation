@@ -36,6 +36,12 @@ class CoordinatorHome extends ConsumerWidget {
               icon: const Icon(Icons.event_note),
               label: const Text('Manage Exam Sessions'),
             ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () => context.go('/coordinator/allocation'),
+              icon: const Icon(Icons.auto_fix_high),
+              label: const Text('Allocation'),
+            ),
           ],
         ),
       ),
